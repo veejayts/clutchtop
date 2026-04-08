@@ -10,7 +10,8 @@ interface ChatPaneProps {
 }
 
 export function ChatPane({ conversationId }: ChatPaneProps) {
-  const messages = useMessagesStore((s) => s.messages[conversationId] ?? [])
+  const rawMessages = useMessagesStore((s) => s.messages[conversationId])
+  const messages = rawMessages ?? []
   const isStreaming = useMessagesStore((s) => s.isStreaming)
   const { send, cancel } = useChat(conversationId)
   const bottomRef = useRef<HTMLDivElement>(null)

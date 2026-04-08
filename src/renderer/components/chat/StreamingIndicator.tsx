@@ -4,10 +4,8 @@ import { useMessagesStore } from '../../store/messages'
 import { CodeBlock } from '../ui/CodeBlock'
 
 export function StreamingIndicator() {
-  const { streamingText, isStreaming } = useMessagesStore((s) => ({
-    streamingText: s.streamingText,
-    isStreaming: s.isStreaming
-  }))
+  const streamingText = useMessagesStore((s) => s.streamingText)
+  const isStreaming = useMessagesStore((s) => s.isStreaming)
 
   if (!isStreaming) return null
 

@@ -12,7 +12,8 @@ interface CodePaneProps {
 }
 
 export function CodePane({ conversationId }: CodePaneProps) {
-  const messages = useMessagesStore((s) => s.messages[conversationId] ?? [])
+  const rawMessages = useMessagesStore((s) => s.messages[conversationId])
+  const messages = rawMessages ?? []
   const isStreaming = useMessagesStore((s) => s.isStreaming)
   const { run, cancel } = useCodeAgent(conversationId)
   const loadMessages = useMessagesStore((s) => s.loadMessages)
