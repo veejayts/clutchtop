@@ -42,12 +42,12 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
-        {conversations.length === 0 && (
+        {conversations.filter((c) => c.mode === mode).length === 0 && (
           <p className="text-xs text-[var(--text-secondary)] text-center py-6 px-4">
-            No conversations yet. Start one!
+            No {mode === 'code' ? 'code sessions' : 'conversations'} yet. Start one!
           </p>
         )}
-        {conversations.map((conv) => (
+        {conversations.filter((c) => c.mode === mode).map((conv) => (
           <div
             key={conv.id}
             className={cn(

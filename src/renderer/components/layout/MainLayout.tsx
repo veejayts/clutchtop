@@ -32,7 +32,11 @@ class ContentErrorBoundary extends React.Component<
 
 export function MainLayout() {
   const mode = useWorkspaceStore((s) => s.mode)
-  const { activeId } = useConversationsStore()
+  const { activeId, conversations } = useConversationsStore()
+
+  // Only show the active conversation if it belongs to the current mode
+  const activeConv = conversations.find((c) => c.id === activeId)
+  const visibleId = activeConv?.mode === mode ? activeId : null
 
   return (
     <div className="flex h-screen bg-[var(--bg-primary)] overflow-hidden">
@@ -40,12 +44,12 @@ export function MainLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
         <main className="flex-1 overflow-hidden">
-          <ContentErrorBoundary key={activeId ?? 'empty'}>
-            {activeId ? (
+          <ContentErrorBoundary key={visibleId ?? 'empty'}>
+            {visibleId ? (
               mode === 'code' ? (
-                <CodePane key={activeId} conversationId={activeId} />
+                <CodePane key={visibleId} conversationId={visibleId} />
               ) : (
-                <ChatPane key={activeId} conversationId={activeId} />
+                <ChatPane key={visibleId} conversationId={visibleId} />
               )
             ) : (
               <EmptyState />
