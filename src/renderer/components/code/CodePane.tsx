@@ -16,7 +16,8 @@ interface CodePaneProps {
 export function CodePane({ conversationId }: CodePaneProps) {
   const rawMessages = useMessagesStore((s) => s.messages[conversationId])
   const messages = rawMessages ?? []
-  const isStreaming = useMessagesStore((s) => s.isStreaming)
+  const streamingState = useMessagesStore((s) => s.streamingStates[conversationId])
+  const isStreaming = streamingState?.isStreaming ?? false
   const { run, cancel } = useCodeAgent(conversationId)
   const loadMessages = useMessagesStore((s) => s.loadMessages)
   const { conversations, update } = useConversationsStore()
@@ -111,7 +112,7 @@ export function CodePane({ conversationId }: CodePaneProps) {
         {messages.map((msg) => (
           <MessageItem key={msg.id} message={msg} />
         ))}
-        <StreamingIndicator />
+        <StreamingIndicator conversationId={conversationId} />
         <div ref={bottomRef} />
       </div>
 

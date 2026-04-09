@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { useMessagesStore } from '../store/messages'
 import { useConversationsStore } from '../store/conversations'
 import { useSettingsStore } from '../store/settings'
+import { useWorkspaceStore } from '../store/workspace'
 import { useProvider } from './useProvider'
 import { CODE_TOOLS } from '../tools/definitions'
 import { executeToolCalls } from '../tools/executor'
@@ -18,9 +19,11 @@ export function useCodeAgent(conversationId: string) {
   const conversation = convsStore.conversations.find((c) => c.id === conversationId)
   const providerId = (conversation?.providerId ?? settings.defaultProvider) as Parameters<typeof useProvider>[0]
   const provider = useProvider(providerId)
+  const agentMode = useWorkspaceStore((s) => s.agentMode)
 
   const run = useCallback(async (userText: string) => {
-    if (!userText.trim() || messagesStore.isStreaming) return
+    const streamingState = messagesStore.getStreamingState(conversationId)
+    if (!userText.trim() || streamingState.isStreaming) return
 
     const workspacePath = conversation?.workspacePath ?? ''
     const model = conversation?.model ?? settings.providers[providerId]?.defaultModel ?? settings.defaultModel
@@ -41,7 +44,10 @@ export function useCodeAgent(conversationId: string) {
     }
 
     const ac = new AbortController()
-    messagesStore.setAbortController(ac)
+    messagesStore.setAbortController(conversationId, ac)
+
+    // In plan mode, don't provide tools so the model responds with text only
+    const tools = agentMode === 'execute' ? CODE_TOOLS : undefined
 
     let iterations = 0
 
@@ -54,19 +60,19 @@ export function useCodeAgent(conversationId: string) {
       const toolUseMap: Record<string, { name: string; inputAccum: string }> = {}
       const toolUseOrder: string[] = []
 
-      messagesStore.setStreamingText('')
+      messagesStore.setStreamingText(conversationId, '')
 
       try {
         for await (const chunk of provider.stream({
           model,
           messages: currentMessages,
           systemPrompt: conversation?.systemPrompt ?? undefined,
-          tools: CODE_TOOLS,
+          tools,
           signal: ac.signal
         })) {
           if (chunk.type === 'text_delta' && chunk.textDelta) {
             textAccum += chunk.textDelta
-            messagesStore.appendStreamingText(chunk.textDelta)
+            messagesStore.appendStreamingText(conversationId, chunk.textDelta)
           } else if (chunk.type === 'tool_use_start' && chunk.toolUseId) {
             toolUseMap[chunk.toolUseId] = { name: chunk.toolName ?? '', inputAccum: '' }
             toolUseOrder.push(chunk.toolUseId)
@@ -84,13 +90,13 @@ export function useCodeAgent(conversationId: string) {
             break
           } else if (chunk.type === 'error') {
             textAccum += `\n[Error: ${chunk.error}]`
-            messagesStore.appendStreamingText(`\n[Error: ${chunk.error}]`)
+            messagesStore.appendStreamingText(conversationId, `\n[Error: ${chunk.error}]`)
             break
           }
         }
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') {
-          messagesStore.setAbortController(null)
+          messagesStore.setAbortController(conversationId, null)
           return
         }
         textAccum += `\n[Error: ${(err as Error).message}]`
@@ -142,7 +148,12 @@ export function useCodeAgent(conversationId: string) {
       }
       await messagesStore.appendMessage(conversationId, toolResultMsg)
     }
-  }, [conversationId, messagesStore, convsStore, settings, provider, conversation, providerId])
+  }, [conversationId, messagesStore, convsStore, settings, provider, conversation, providerId, agentMode])
 
-  return { run, isStreaming: messagesStore.isStreaming, cancel: messagesStore.cancelStream }
+  const streamingState = messagesStore.getStreamingState(conversationId)
+  return {
+    run,
+    isStreaming: streamingState.isStreaming,
+    cancel: () => messagesStore.cancelStream(conversationId)
+  }
 }

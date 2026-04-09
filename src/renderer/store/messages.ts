@@ -2,21 +2,27 @@ import { create } from 'zustand'
 import type { Message, ContentPart } from '../providers/types'
 import { nanoid } from 'nanoid'
 
-interface MessagesStore {
-  messages: Record<string, Message[]>    // keyed by conversationId
-  streamingText: string                  // live text for current stream
+interface StreamingState {
+  text: string
   isStreaming: boolean
   abortController: AbortController | null
+}
+
+interface MessagesStore {
+  messages: Record<string, Message[]>    // keyed by conversationId
+  streamingStates: Record<string, StreamingState>  // keyed by conversationId
 
   loadMessages: (conversationId: string) => Promise<void>
   appendMessage: (conversationId: string, msg: Message) => Promise<void>
   appendMessageLocal: (conversationId: string, msg: Message) => void
-  setStreamingText: (text: string) => void
-  appendStreamingText: (delta: string) => void
+  setStreamingText: (conversationId: string, text: string) => void
+  appendStreamingText: (conversationId: string, delta: string) => void
   finalizeStream: (conversationId: string, content: ContentPart[]) => Promise<Message>
-  cancelStream: () => void
-  setAbortController: (ac: AbortController | null) => void
+  cancelStream: (conversationId: string) => void
+  setAbortController: (conversationId: string, ac: AbortController | null) => void
   getMessages: (conversationId: string) => Message[]
+  getStreamingState: (conversationId: string) => StreamingState
+  clearConversationState: (conversationId: string) => void
 }
 
 function rowToMessage(row: Record<string, unknown>): Message {
@@ -36,9 +42,7 @@ function rowToMessage(row: Record<string, unknown>): Message {
 
 export const useMessagesStore = create<MessagesStore>((set, get) => ({
   messages: {},
-  streamingText: '',
-  isStreaming: false,
-  abortController: null,
+  streamingStates: {},
 
   loadMessages: async (conversationId) => {
     const rows = await window.api.db.messages.list(conversationId)
@@ -73,8 +77,34 @@ export const useMessagesStore = create<MessagesStore>((set, get) => ({
     }))
   },
 
-  setStreamingText: (text) => set({ streamingText: text, isStreaming: true }),
-  appendStreamingText: (delta) => set((s) => ({ streamingText: s.streamingText + delta, isStreaming: true })),
+  setStreamingText: (conversationId, text) => {
+    set((s) => ({
+      streamingStates: {
+        ...s.streamingStates,
+        [conversationId]: {
+          ...(s.streamingStates[conversationId] ?? { text: '', isStreaming: false, abortController: null }),
+          text,
+          isStreaming: true
+        }
+      }
+    }))
+  },
+
+  appendStreamingText: (conversationId, delta) => {
+    set((s) => {
+      const current = s.streamingStates[conversationId] ?? { text: '', isStreaming: false, abortController: null }
+      return {
+        streamingStates: {
+          ...s.streamingStates,
+          [conversationId]: {
+            ...current,
+            text: current.text + delta,
+            isStreaming: true
+          }
+        }
+      }
+    })
+  },
 
   finalizeStream: async (conversationId, content) => {
     const msg: Message = {
@@ -92,23 +122,67 @@ export const useMessagesStore = create<MessagesStore>((set, get) => ({
       content: JSON.stringify(msg.content),
       seq
     })
-    set((s) => ({
-      streamingText: '',
-      isStreaming: false,
-      messages: {
-        ...s.messages,
-        [conversationId]: [...(s.messages[conversationId] ?? []), msg]
+    set((s) => {
+      const current = s.streamingStates[conversationId]
+      return {
+        streamingStates: {
+          ...s.streamingStates,
+          [conversationId]: {
+            text: '',
+            isStreaming: false,
+            abortController: current?.abortController ?? null
+          }
+        },
+        messages: {
+          ...s.messages,
+          [conversationId]: [...(s.messages[conversationId] ?? []), msg]
+        }
       }
-    }))
+    })
     return msg
   },
 
-  cancelStream: () => {
-    get().abortController?.abort()
-    set({ isStreaming: false, streamingText: '', abortController: null })
+  cancelStream: (conversationId) => {
+    const current = get().streamingStates[conversationId]
+    current?.abortController?.abort()
+    set((s) => ({
+      streamingStates: {
+        ...s.streamingStates,
+        [conversationId]: {
+          text: '',
+          isStreaming: false,
+          abortController: null
+        }
+      }
+    }))
   },
 
-  setAbortController: (ac) => set({ abortController: ac }),
+  setAbortController: (conversationId, ac) => {
+    set((s) => ({
+      streamingStates: {
+        ...s.streamingStates,
+        [conversationId]: {
+          ...(s.streamingStates[conversationId] ?? { text: '', isStreaming: false, abortController: null }),
+          abortController: ac
+        }
+      }
+    }))
+  },
 
-  getMessages: (conversationId) => get().messages[conversationId] ?? []
+  getMessages: (conversationId) => get().messages[conversationId] ?? [],
+
+  getStreamingState: (conversationId) => {
+    const state = get().streamingStates[conversationId]
+    return state ?? { text: '', isStreaming: false, abortController: null }
+  },
+
+  clearConversationState: (conversationId) => {
+    set((s) => {
+      const newMessages = { ...s.messages }
+      const newStreamingStates = { ...s.streamingStates }
+      delete newMessages[conversationId]
+      delete newStreamingStates[conversationId]
+      return { messages: newMessages, streamingStates: newStreamingStates }
+    })
+  }
 }))

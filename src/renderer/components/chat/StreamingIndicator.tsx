@@ -3,9 +3,9 @@ import ReactMarkdown from 'react-markdown'
 import { useMessagesStore } from '../../store/messages'
 import { CodeBlock } from '../ui/CodeBlock'
 
-export function StreamingIndicator() {
-  const streamingText = useMessagesStore((s) => s.streamingText)
-  const isStreaming = useMessagesStore((s) => s.isStreaming)
+export function StreamingIndicator({ conversationId }: { conversationId: string }) {
+  const streamingText = useMessagesStore((s) => s.streamingStates[conversationId]?.text ?? '')
+  const isStreaming = useMessagesStore((s) => s.streamingStates[conversationId]?.isStreaming ?? false)
 
   if (!isStreaming) return null
 

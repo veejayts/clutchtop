@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Plus, MessageSquare, Code2, Trash2 } from 'lucide-react'
 import { useConversationsStore } from '../../store/conversations'
 import { useWorkspaceStore } from '../../store/workspace'
+import { useMessagesStore } from '../../store/messages'
 import { cn, truncate, formatDate } from '../../lib/utils'
 import { Button } from '../ui/Button'
 
 export function Sidebar() {
   const { conversations, activeId, create, delete: deleteConv, setActive, update } = useConversationsStore()
   const { mode } = useWorkspaceStore()
+  const streamingStates = useMessagesStore((s) => s.streamingStates)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const editRef = useRef<HTMLInputElement>(null)
@@ -79,6 +81,10 @@ export function Sidebar() {
               >
                 {truncate(conv.title, 30)}
               </span>
+            )}
+
+            {streamingStates[conv.id]?.isStreaming && (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
             )}
 
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

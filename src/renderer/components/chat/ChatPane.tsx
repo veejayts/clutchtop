@@ -12,7 +12,8 @@ interface ChatPaneProps {
 export function ChatPane({ conversationId }: ChatPaneProps) {
   const rawMessages = useMessagesStore((s) => s.messages[conversationId])
   const messages = rawMessages ?? []
-  const isStreaming = useMessagesStore((s) => s.isStreaming)
+  const streamingState = useMessagesStore((s) => s.streamingStates[conversationId])
+  const isStreaming = streamingState?.isStreaming ?? false
   const { send, cancel } = useChat(conversationId)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -38,7 +39,7 @@ export function ChatPane({ conversationId }: ChatPaneProps) {
         {messages.map((msg) => (
           <MessageItem key={msg.id} message={msg} />
         ))}
-        <StreamingIndicator />
+        <StreamingIndicator conversationId={conversationId} />
         <div ref={bottomRef} />
       </div>
       <MessageInput onSend={send} isStreaming={isStreaming} onCancel={cancel} />

@@ -15,7 +15,8 @@ export function useChat(conversationId: string) {
   const provider = useProvider(providerId)
 
   const send = useCallback(async (userText: string) => {
-    if (!userText.trim() || messagesStore.isStreaming) return
+    const streamingState = messagesStore.getStreamingState(conversationId)
+    if (!userText.trim() || streamingState.isStreaming) return
 
     const model = conversation?.model ?? settings.providers[providerId]?.defaultModel ?? settings.defaultModel
 
@@ -36,13 +37,13 @@ export function useChat(conversationId: string) {
     }
 
     const ac = new AbortController()
-    messagesStore.setAbortController(ac)
+    messagesStore.setAbortController(conversationId, ac)
 
     const allMessages = messagesStore.getMessages(conversationId)
 
     try {
       const textParts: ContentPart[] = []
-      messagesStore.setStreamingText('')
+      messagesStore.setStreamingText(conversationId, '')
 
       for await (const chunk of provider.stream({
         model,
@@ -51,12 +52,12 @@ export function useChat(conversationId: string) {
         signal: ac.signal
       })) {
         if (chunk.type === 'text_delta' && chunk.textDelta) {
-          messagesStore.appendStreamingText(chunk.textDelta)
+          messagesStore.appendStreamingText(conversationId, chunk.textDelta)
           textParts.push({ type: 'text', text: chunk.textDelta })
         } else if (chunk.type === 'message_stop') {
           break
         } else if (chunk.type === 'error') {
-          messagesStore.appendStreamingText(`\n[Error: ${chunk.error}]`)
+          messagesStore.appendStreamingText(conversationId, `\n[Error: ${chunk.error}]`)
           break
         }
       }
@@ -66,13 +67,20 @@ export function useChat(conversationId: string) {
       await messagesStore.finalizeStream(conversationId, [{ type: 'text', text: fullText }])
     } catch (err) {
       if ((err as Error)?.name !== 'AbortError') {
-        messagesStore.appendStreamingText(`\n[Error: ${(err as Error).message}]`)
-        await messagesStore.finalizeStream(conversationId, [{ type: 'text', text: useMessagesStore.getState().streamingText }])
+        const currentText = messagesStore.getStreamingState(conversationId).text
+        messagesStore.appendStreamingText(conversationId, `\n[Error: ${(err as Error).message}]`)
+        await messagesStore.finalizeStream(conversationId, [{ type: 'text', text: currentText + `\n[Error: ${(err as Error).message}]` }])
       } else {
-        messagesStore.setAbortController(null)
+        messagesStore.setAbortController(conversationId, null)
       }
     }
   }, [conversationId, messagesStore, convsStore, settings, provider, conversation, providerId])
 
-  return { send, isStreaming: messagesStore.isStreaming, cancel: messagesStore.cancelStream }
+  const streamingState = messagesStore.getStreamingState(conversationId)
+  return { 
+    send, 
+    isStreaming: streamingState.isStreaming, 
+    streamingText: streamingState.text,
+    cancel: () => messagesStore.cancelStream(conversationId) 
+  }
 }

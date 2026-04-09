@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { useMessagesStore } from './messages'
 
 export interface Conversation {
   id: string
@@ -54,7 +53,6 @@ export const useConversationsStore = create<ConversationsStore>((set, get) => ({
     const mode = data?.mode ?? 'chat'
     const row = await window.api.db.conversations.create({ title, mode })
     const conv = rowToConversation(row as unknown as Record<string, unknown>)
-    useMessagesStore.getState().cancelStream()
     set((s) => ({ conversations: [conv, ...s.conversations], activeId: conv.id }))
     return conv
   },
@@ -84,7 +82,6 @@ export const useConversationsStore = create<ConversationsStore>((set, get) => ({
   },
 
   setActive: (id) => {
-    useMessagesStore.getState().cancelStream()
     set({ activeId: id })
   },
 
