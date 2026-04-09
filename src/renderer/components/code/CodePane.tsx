@@ -7,11 +7,16 @@ import { StreamingIndicator } from '../chat/StreamingIndicator'
 import { MessageInput } from '../chat/MessageInput'
 import { useConversationsStore } from '../../store/conversations'
 import { useWorkspaceStore } from '../../store/workspace'
+import { useProvider } from '../../hooks/useProvider'
+import { useSettingsStore } from '../../store/settings'
+import { generateCommitMessage } from '../../lib/generateCommitMessage'
 import { cn, truncate } from '../../lib/utils'
 
 interface CodePaneProps {
   conversationId: string
 }
+
+const EMPTY_FILES = { added: [] as string[], modified: [] as string[], deleted: [] as string[], renamed: [] as string[] }
 
 export function CodePane({ conversationId }: CodePaneProps) {
   const rawMessages = useMessagesStore((s) => s.messages[conversationId])
@@ -23,6 +28,9 @@ export function CodePane({ conversationId }: CodePaneProps) {
   const { conversations, update } = useConversationsStore()
   const conv = conversations.find((c) => c.id === conversationId)
   const { agentMode, setAgentMode, selectWorkspace } = useWorkspaceStore()
+  const settings = useSettingsStore()
+  const providerId = (conv?.providerId ?? settings.defaultProvider) as Parameters<typeof useProvider>[0]
+  const provider = useProvider(providerId)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const [gitBranch, setGitBranch] = useState<string | null>(null)
@@ -87,7 +95,24 @@ export function CodePane({ conversationId }: CodePaneProps) {
     setCommitResult(null)
 
     try {
-      const result = await window.api.tools.execute('gitCommitAndPush', {}, workspacePath)
+      // Step 1: Get changes summary from the main process
+      const changesSummary = await window.api.git.changesSummary(workspacePath)
+
+      // Step 2: Use LLM to generate a commit message
+      let commitMessage: string | undefined
+
+      if (changesSummary.hasChanges) {
+        const model = conv?.model ?? (providerId ? settings.providers[providerId]?.defaultModel : undefined) ?? settings.defaultModel
+        const llmMessage = await generateCommitMessage(provider, model, {
+          files: changesSummary.files ?? EMPTY_FILES,
+          diffStat: changesSummary.diffStat ?? '',
+          diffContent: changesSummary.diffContent ?? ''
+        })
+        commitMessage = llmMessage ?? undefined
+      }
+
+      // Step 3: Execute git commit and push with the LLM-generated message
+      const result = await window.api.tools.execute('gitCommitAndPush', { commitMessage }, workspacePath)
       const isError = result.isError
       setCommitResult({
         success: !isError,
@@ -110,7 +135,7 @@ export function CodePane({ conversationId }: CodePaneProps) {
       // Clear result after 8 seconds
       setTimeout(() => setCommitResult(null), 8000)
     }
-  }, [workspacePath, isCommitting])
+  }, [workspacePath, isCommitting, provider, conv, settings, providerId])
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)]">
@@ -286,7 +311,7 @@ export function CodePane({ conversationId }: CodePaneProps) {
                 ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md active:scale-95"
                 : "bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed"
             )}
-            title="Stage all changes, generate a commit message, commit and push to remote"
+            title="Use AI to generate a commit message, then commit and push to remote"
           >
             {isCommitting ? (
               <>

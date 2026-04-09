@@ -86,13 +86,13 @@ export const CODE_TOOLS: ToolDefinition[] = [
   },
   {
     name: 'gitCommitAndPush',
-    description: 'Generate a comprehensive commit message and apply git commit and git push to the repository. This tool will analyze the changes in the workspace and create a meaningful commit message automatically.',
+    description: 'Stage all changes, commit with a descriptive message, and push to the remote repository. You MUST provide a commitMessage that clearly describes the changes you made — write it in imperative mood following conventional commit style (e.g., "Add user authentication flow", "Fix off-by-one error in pagination"). If you do not provide a message, a generic fallback will be used.',
     inputSchema: {
       type: 'object',
       properties: {
-        commitMessage: { type: 'string', description: 'Optional custom commit message. If not provided, an AI-generated message will be created.' }
+        commitMessage: { type: 'string', description: 'A descriptive commit message in imperative mood summarizing the changes. Always provide this when you know what changes were made.' }
       },
-      required: []
+      required: ['commitMessage']
     }
   }
 ]
