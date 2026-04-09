@@ -4,7 +4,7 @@ import { useMessagesStore } from './messages'
 export interface Conversation {
   id: string
   title: string
-  mode: 'chat' | 'code'
+  mode: 'chat' | 'agent'
   systemPrompt: string | null
   providerId: string | null
   model: string | null
@@ -17,7 +17,7 @@ function rowToConversation(row: Record<string, unknown>): Conversation {
   return {
     id: row.id as string,
     title: row.title as string,
-    mode: (row.mode as string) === 'code' ? 'code' : 'chat',
+    mode: (row.mode as string) === 'agent' ? 'agent' : ((row.mode as string) === 'code' ? 'agent' : 'chat'),
     systemPrompt: (row.system_prompt as string | null) ?? null,
     providerId: (row.provider_id as string | null) ?? null,
     model: (row.model as string | null) ?? null,
@@ -32,7 +32,7 @@ interface ConversationsStore {
   activeId: string | null
   loaded: boolean
   load: () => Promise<void>
-  create: (data?: { title?: string; mode?: 'chat' | 'code' }) => Promise<Conversation>
+  create: (data?: { title?: string; mode?: 'chat' | 'agent' }) => Promise<Conversation>
   update: (id: string, data: Partial<Pick<Conversation, 'title' | 'systemPrompt' | 'providerId' | 'model' | 'workspacePath'>>) => Promise<void>
   delete: (id: string) => Promise<void>
   setActive: (id: string | null) => void

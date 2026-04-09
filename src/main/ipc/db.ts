@@ -6,6 +6,8 @@ import {
   deleteConversation,
   listMessages,
   appendMessage,
+  listRecentWorkspaces,
+  touchRecentWorkspace,
   listOpenRouterModels,
   replaceOpenRouterModels
 } from '../db/queries'
@@ -33,6 +35,16 @@ export function registerDbHandlers(): void {
 
   ipcMain.handle('db:messages:append', (_e, msg) => {
     appendMessage(msg)
+  })
+
+  // ---- Recent Workspaces ----
+
+  ipcMain.handle('db:workspaces:list', () => {
+    return listRecentWorkspaces()
+  })
+
+  ipcMain.handle('db:workspaces:touch', (_e, path: string) => {
+    touchRecentWorkspace(path)
   })
 
   // ---- OpenRouter Models ----

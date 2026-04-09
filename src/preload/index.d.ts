@@ -1,7 +1,7 @@
 export interface ConversationRow {
   id: string
   title: string
-  mode: 'chat' | 'code'
+  mode: 'chat' | 'agent'
   systemPrompt: string | null
   providerId: string | null
   model: string | null
@@ -18,6 +18,11 @@ export interface MessageRow {
   toolUseId: string | null
   seq: number
   createdAt: string
+}
+
+export interface RecentWorkspaceRow {
+  path: string
+  last_used_at: string
 }
 
 export interface OpenRouterModelRow {
@@ -58,6 +63,10 @@ declare global {
             seq: number
           }) => Promise<void>
         }
+        workspaces: {
+          list: () => Promise<RecentWorkspaceRow[]>
+          touch: (path: string) => Promise<void>
+        }
         openrouter: {
           models: {
             list: () => Promise<OpenRouterModelRow[]>
@@ -75,6 +84,7 @@ declare global {
       }
       workspace: {
         select: () => Promise<string | null>
+        gitBranch: (path: string) => Promise<string | null>
       }
     }
   }

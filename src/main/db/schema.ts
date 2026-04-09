@@ -28,6 +28,11 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, seq);
 
+CREATE TABLE IF NOT EXISTS recent_workspaces (
+  path         TEXT PRIMARY KEY,
+  last_used_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS openrouter_models (
   id                 TEXT PRIMARY KEY,
   name               TEXT NOT NULL,

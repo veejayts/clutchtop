@@ -36,7 +36,7 @@ export function MainLayout() {
 
   // Only show the active conversation if it belongs to the current mode
   const activeConv = conversations.find((c) => c.id === activeId)
-  const visibleId = activeConv?.mode === mode ? activeId : null
+  const visibleId = (activeConv?.mode === mode || (mode === 'agent' && activeConv?.mode === 'code')) ? activeId : null
 
   return (
     <div className="flex h-screen bg-[var(--bg-primary)] overflow-hidden">
@@ -46,7 +46,7 @@ export function MainLayout() {
         <main className="flex-1 overflow-hidden">
           <ContentErrorBoundary key={visibleId ?? 'empty'}>
             {visibleId ? (
-              mode === 'code' ? (
+              mode === 'agent' ? (
                 <CodePane key={visibleId} conversationId={visibleId} />
               ) : (
                 <ChatPane key={visibleId} conversationId={visibleId} />

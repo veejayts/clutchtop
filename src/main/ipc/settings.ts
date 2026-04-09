@@ -51,6 +51,20 @@ export function registerSettingsHandlers(): void {
     })
     return result.canceled ? null : result.filePaths[0]
   })
+
+  ipcMain.handle('workspace:git-branch', (_e, workspacePath: string) => {
+    try {
+      const headPath = join(workspacePath, '.git', 'HEAD')
+      if (!existsSync(headPath)) return null
+      const content = readFileSync(headPath, 'utf-8').trim()
+      if (content.startsWith('ref: refs/heads/')) {
+        return content.replace('ref: refs/heads/', '')
+      }
+      return null // detached HEAD — don't show anything
+    } catch {
+      return null
+    }
+  })
 }
 
 function deepMerge(target: Record<string, unknown>, source: Record<string, unknown>): Record<string, unknown> {

@@ -44,7 +44,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto py-2">
         {conversations.filter((c) => c.mode === mode).length === 0 && (
           <p className="text-xs text-[var(--text-secondary)] text-center py-6 px-4">
-            No {mode === 'code' ? 'code sessions' : 'conversations'} yet. Start one!
+            No {mode === 'agent' ? 'agent sessions' : 'conversations'} yet. Start one!
           </p>
         )}
         {conversations.filter((c) => c.mode === mode).map((conv) => (
@@ -59,7 +59,7 @@ export function Sidebar() {
             onClick={() => setActive(conv.id)}
           >
             <span className="flex-shrink-0 text-[var(--text-secondary)]">
-              {conv.mode === 'code' ? <Code2 size={14} /> : <MessageSquare size={14} />}
+              {conv.mode === 'agent' ? <Code2 size={14} /> : <MessageSquare size={14} />}
             </span>
 
             {editingId === conv.id ? (

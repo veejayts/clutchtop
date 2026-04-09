@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { MessageSquare, Code2, Settings, Sun, Moon, Monitor } from 'lucide-react'
+import { MessageSquare, Bot, Settings, Sun, Moon, Monitor } from 'lucide-react'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useSettingsStore } from '../../store/settings'
 import { SettingsModal } from '../settings/SettingsModal'
@@ -37,16 +37,16 @@ export function TopBar() {
             Chat
           </button>
           <button
-            onClick={() => setMode('code')}
+            onClick={() => setMode('agent')}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
-              mode === 'code'
+              mode === 'agent'
                 ? 'bg-amber-600 text-white'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             )}
           >
-            <Code2 size={13} />
-            Code
+            <Bot size={13} />
+            Agent
           </button>
         </div>
 

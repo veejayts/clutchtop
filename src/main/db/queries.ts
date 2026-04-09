@@ -101,6 +101,28 @@ export function appendMessage(msg: {
   getDb().prepare('UPDATE conversations SET updated_at = ? WHERE id = ?').run(now, msg.conversationId)
 }
 
+// ---- Recent Workspaces ----
+
+export interface RecentWorkspaceRow {
+  path: string
+  last_used_at: string
+}
+
+export function listRecentWorkspaces(): RecentWorkspaceRow[] {
+  return getDb()
+    .prepare('SELECT * FROM recent_workspaces ORDER BY last_used_at DESC LIMIT 20')
+    .all() as RecentWorkspaceRow[]
+}
+
+export function touchRecentWorkspace(path: string): void {
+  getDb()
+    .prepare(
+      `INSERT INTO recent_workspaces (path, last_used_at) VALUES (?, ?)
+       ON CONFLICT(path) DO UPDATE SET last_used_at = excluded.last_used_at`
+    )
+    .run(path, new Date().toISOString())
+}
+
 // ---- OpenRouter Models ----
 
 export interface OpenRouterModelRow {

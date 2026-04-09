@@ -22,6 +22,10 @@ const api = {
         seq: number
       }) => ipcRenderer.invoke('db:messages:append', msg)
     },
+    workspaces: {
+      list: () => ipcRenderer.invoke('db:workspaces:list'),
+      touch: (path: string) => ipcRenderer.invoke('db:workspaces:touch', path)
+    },
     openrouter: {
       models: {
         list: () => ipcRenderer.invoke('db:openrouter:models:list'),
@@ -43,7 +47,8 @@ const api = {
     }
   },
   workspace: {
-    select: () => ipcRenderer.invoke('workspace:select')
+    select: () => ipcRenderer.invoke('workspace:select'),
+    gitBranch: (path: string) => ipcRenderer.invoke('workspace:git-branch', path)
   }
 }
 
