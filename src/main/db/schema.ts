@@ -27,4 +27,14 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id, seq);
+
+CREATE TABLE IF NOT EXISTS openrouter_models (
+  id                 TEXT PRIMARY KEY,
+  name               TEXT NOT NULL,
+  description        TEXT,
+  context_length     INTEGER,
+  pricing_prompt     REAL,
+  pricing_completion REAL,
+  fetched_at         TEXT NOT NULL
+);
 `

@@ -20,6 +20,16 @@ export interface MessageRow {
   createdAt: string
 }
 
+export interface OpenRouterModelRow {
+  id: string
+  name: string
+  description: string | null
+  context_length: number | null
+  pricing_prompt: number | null
+  pricing_completion: number | null
+  fetched_at: string
+}
+
 export interface AppSettings {
   theme: 'dark' | 'light' | 'system'
   defaultProvider: string
@@ -47,6 +57,12 @@ declare global {
             toolUseId?: string
             seq: number
           }) => Promise<void>
+        }
+        openrouter: {
+          models: {
+            list: () => Promise<OpenRouterModelRow[]>
+            fetch: (apiKey: string) => Promise<OpenRouterModelRow[]>
+          }
         }
       }
       settings: {

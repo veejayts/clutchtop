@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { useSettingsStore } from '../../store/settings'
 import { PROVIDER_LABELS, ALL_PROVIDER_IDS } from '../../providers/registry'
 import { Input } from '../ui/Input'
@@ -14,14 +15,50 @@ const DEFAULT_MODELS: Record<string, string[]> = {
 
 export function ProviderSettings() {
   const { providers, updateProviderConfig, save } = useSettingsStore()
+  const [orModels, setOrModels] = useState<{ id: string; name: string }[]>([])
+  const [orFetchedAt, setOrFetchedAt] = useState<string | null>(null)
+  const [orFetching, setOrFetching] = useState(false)
+  const [orError, setOrError] = useState<string | null>(null)
+
+  // Load stored OpenRouter models from DB on mount
+  useEffect(() => {
+    window.api.db.openrouter.models.list().then((rows) => {
+      if (rows.length > 0) {
+        setOrModels(rows.map((r) => ({ id: r.id, name: r.name })))
+        setOrFetchedAt(rows[0].fetched_at)
+      }
+    }).catch(() => { /* DB not yet seeded */ })
+  }, [])
+
+  const handleFetchOrModels = async () => {
+    const apiKey = providers['openrouter']?.apiKey
+    if (!apiKey) {
+      setOrError('Enter your OpenRouter API key first.')
+      return
+    }
+    setOrFetching(true)
+    setOrError(null)
+    try {
+      const rows = await window.api.db.openrouter.models.fetch(apiKey)
+      setOrModels(rows.map((r) => ({ id: r.id, name: r.name })))
+      setOrFetchedAt(rows[0]?.fetched_at ?? null)
+    } catch (err) {
+      setOrError((err as Error).message ?? 'Fetch failed')
+    } finally {
+      setOrFetching(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
       {ALL_PROVIDER_IDS.map((id) => {
         const config = providers[id] ?? { defaultModel: '' }
-        const models = DEFAULT_MODELS[id] ?? []
         const needsApiKey = id !== 'ollama'
         const needsBaseUrl = id === 'ollama' || id === 'openrouter'
+        const isOpenRouter = id === 'openrouter'
+        const modelOptions = isOpenRouter && orModels.length > 0
+          ? orModels.map((m) => ({ value: m.id, label: m.name }))
+          : (DEFAULT_MODELS[id] ?? []).map((m) => ({ value: m, label: m }))
 
         return (
           <div key={id} className="space-y-3">
@@ -55,9 +92,30 @@ export function ProviderSettings() {
                 <Select
                   value={config.defaultModel}
                   onChange={(e) => { updateProviderConfig(id, { defaultModel: e.target.value }); save() }}
-                  options={models.map((m) => ({ value: m, label: m }))}
+                  options={modelOptions}
                 />
               </div>
+
+              {isOpenRouter && (
+                <div className="pt-1 space-y-1">
+                  <button
+                    onClick={handleFetchOrModels}
+                    disabled={orFetching}
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-amber-600/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw size={11} className={orFetching ? 'animate-spin' : ''} />
+                    {orFetching ? 'Fetching…' : 'Fetch latest models'}
+                  </button>
+                  {orFetchedAt && !orError && (
+                    <p className="text-[10px] text-[var(--text-secondary)]">
+                      {orModels.length} models · last fetched {new Date(orFetchedAt).toLocaleString()}
+                    </p>
+                  )}
+                  {orError && (
+                    <p className="text-[10px] text-red-400">{orError}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )

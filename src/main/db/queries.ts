@@ -100,3 +100,47 @@ export function appendMessage(msg: {
   // update conversation updated_at
   getDb().prepare('UPDATE conversations SET updated_at = ? WHERE id = ?').run(now, msg.conversationId)
 }
+
+// ---- OpenRouter Models ----
+
+export interface OpenRouterModelRow {
+  id: string
+  name: string
+  description: string | null
+  context_length: number | null
+  pricing_prompt: number | null
+  pricing_completion: number | null
+  fetched_at: string
+}
+
+export function listOpenRouterModels(): OpenRouterModelRow[] {
+  return getDb()
+    .prepare('SELECT * FROM openrouter_models ORDER BY name ASC')
+    .all() as OpenRouterModelRow[]
+}
+
+export function replaceOpenRouterModels(models: Omit<OpenRouterModelRow, 'fetched_at'>[]): void {
+  const now = new Date().toISOString()
+  const db = getDb()
+  const insertOrReplace = db.prepare(
+    `INSERT OR REPLACE INTO openrouter_models
+       (id, name, description, context_length, pricing_prompt, pricing_completion, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  )
+  const deleteOld = db.prepare('DELETE FROM openrouter_models')
+
+  db.transaction(() => {
+    deleteOld.run()
+    for (const m of models) {
+      insertOrReplace.run(
+        m.id,
+        m.name,
+        m.description ?? null,
+        m.context_length ?? null,
+        m.pricing_prompt ?? null,
+        m.pricing_completion ?? null,
+        now
+      )
+    }
+  })()
+}

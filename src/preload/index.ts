@@ -21,6 +21,12 @@ const api = {
         toolUseId?: string
         seq: number
       }) => ipcRenderer.invoke('db:messages:append', msg)
+    },
+    openrouter: {
+      models: {
+        list: () => ipcRenderer.invoke('db:openrouter:models:list'),
+        fetch: (apiKey: string) => ipcRenderer.invoke('db:openrouter:models:fetch', apiKey)
+      }
     }
   },
   settings: {
