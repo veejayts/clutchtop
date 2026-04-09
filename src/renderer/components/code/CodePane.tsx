@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { FolderOpen, GitBranch, ChevronDown, Zap, BookOpen, GitCommit, Loader2 } from 'lucide-react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
+import { FolderOpen, GitBranch, ChevronDown, Zap, BookOpen, GitCommitHorizontal, Loader2, Check, X } from 'lucide-react'
 import { useMessagesStore } from '../../store/messages'
 import { useCodeAgent } from '../../hooks/useCodeAgent'
 import { MessageItem } from '../chat/MessageItem'
@@ -26,11 +26,12 @@ export function CodePane({ conversationId }: CodePaneProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const [gitBranch, setGitBranch] = useState<string | null>(null)
+  const [isGitRepo, setIsGitRepo] = useState(false)
   const [agentModeOpen, setAgentModeOpen] = useState(false)
   const [recentWorkspaces, setRecentWorkspaces] = useState<string[]>([])
   const [workspaceOpen, setWorkspaceOpen] = useState(false)
   const [isCommitting, setIsCommitting] = useState(false)
-  const [commitResult, setCommitResult] = useState<string | null>(null)
+  const [commitResult, setCommitResult] = useState<{ success: boolean; message: string } | null>(null)
 
   const workspacePath = conv?.workspacePath ?? null
   const hasWorkspace = Boolean(workspacePath)
@@ -45,10 +46,17 @@ export function CodePane({ conversationId }: CodePaneProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages.length, isStreaming])
 
-  // Detect git branch whenever workspace changes
+  // Detect git status whenever workspace changes
   useEffect(() => {
-    if (!workspacePath) { setGitBranch(null); return }
+    if (!workspacePath) {
+      setGitBranch(null)
+      setIsGitRepo(false)
+      return
+    }
     window.api.workspace.gitBranch(workspacePath).then(setGitBranch).catch(() => setGitBranch(null))
+    window.api.git.status(workspacePath).then((status) => {
+      setIsGitRepo(status.isGit)
+    }).catch(() => setIsGitRepo(false))
   }, [workspacePath])
 
   // Load recent workspaces
@@ -72,41 +80,51 @@ export function CodePane({ conversationId }: CodePaneProps) {
     setWorkspaceOpen(false)
   }
 
-  const handleCommitAndPush = async () => {
+  const handleCommitAndPush = useCallback(async () => {
     if (!workspacePath || isCommitting) return
-    
+
     setIsCommitting(true)
     setCommitResult(null)
-    
+
     try {
       const result = await window.api.tools.execute('gitCommitAndPush', {}, workspacePath)
-      setCommitResult(result.isError ? `Error: ${result.content}` : result.content)
-      
+      const isError = result.isError
+      setCommitResult({
+        success: !isError,
+        message: result.content
+      })
+
       // Refresh git branch after push (in case it changed)
       window.api.workspace.gitBranch(workspacePath).then(setGitBranch).catch(() => {})
+      window.api.git.status(workspacePath).then((status) => {
+        setIsGitRepo(status.isGit)
+      }).catch(() => {})
     } catch (err) {
-      setCommitResult(`Error: ${err instanceof Error ? err.message : String(err)}`)
+      setCommitResult({
+        success: false,
+        message: err instanceof Error ? err.message : String(err)
+      })
     } finally {
       setIsCommitting(false)
-      
-      // Clear result after 5 seconds
-      setTimeout(() => setCommitResult(null), 5000)
+
+      // Clear result after 8 seconds
+      setTimeout(() => setCommitResult(null), 8000)
     }
-  }
+  }, [workspacePath, isCommitting])
 
   return (
     <div className="flex flex-col h-full bg-[var(--bg-primary)]">
       {/* Message area */}
       <div className="flex-1 overflow-y-auto relative">
         {/* Subtle pattern */}
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none opacity-[0.02]"
           style={{
             backgroundImage: `radial-gradient(circle, var(--text-secondary) 1px, transparent 1px)`,
             backgroundSize: '24px 24px'
           }}
         ></div>
-        
+
         <div className="relative flex flex-col">
           {messages.length === 0 && !isStreaming && (
             <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] text-sm gap-3 px-6">
@@ -153,11 +171,11 @@ export function CodePane({ conversationId }: CodePaneProps) {
               )}
             </div>
           )}
-          
+
           {messages.map((msg) => (
             <MessageItem key={msg.id} message={msg} />
           ))}
-          
+
           <StreamingIndicator conversationId={conversationId} />
           <div ref={bottomRef} />
         </div>
@@ -166,20 +184,23 @@ export function CodePane({ conversationId }: CodePaneProps) {
       {/* Commit result toast */}
       {commitResult && (
         <div className={cn(
-          "mx-4 mb-2 px-4 py-3 rounded-xl text-sm border shadow-lg animate-in slide-in-from-bottom-2 duration-200",
-          commitResult.startsWith('Error') 
-            ? "bg-red-500/10 border-red-500/30 text-red-400" 
-            : "bg-green-500/10 border-green-500/30 text-green-400"
+          "mx-4 mb-2 px-4 py-3 rounded-xl text-sm border shadow-lg transition-all duration-300",
+          commitResult.success
+            ? "bg-green-500/10 border-green-500/30 text-green-400"
+            : "bg-red-500/10 border-red-500/30 text-red-400"
         )}>
           <div className="flex items-start gap-2">
             <div className={cn(
               "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
-              commitResult.startsWith('Error') ? "bg-red-500/20" : "bg-green-500/20"
+              commitResult.success ? "bg-green-500/20" : "bg-red-500/20"
             )}>
-              {commitResult.startsWith('Error') ? '✕' : '✓'}
+              {commitResult.success
+                ? <Check size={12} className="text-green-400" />
+                : <X size={12} className="text-red-400" />
+              }
             </div>
-            <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed overflow-auto max-h-32">
-              {commitResult}
+            <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed overflow-auto max-h-32 flex-1">
+              {commitResult.message}
             </pre>
           </div>
         </div>
@@ -254,30 +275,32 @@ export function CodePane({ conversationId }: CodePaneProps) {
           </span>
         )}
 
-        {/* Commit and Push button */}
-        <button
-          onClick={handleCommitAndPush}
-          disabled={!hasWorkspace || isCommitting}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all duration-200",
-            hasWorkspace && !isCommitting
-              ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md active:scale-95"
-              : "bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed"
-          )}
-          title={!hasWorkspace ? "Select a workspace first" : "Commit and push all changes"}
-        >
-          {isCommitting ? (
-            <>
-              <Loader2 size={12} className="animate-spin" />
-              <span>Committing…</span>
-            </>
-          ) : (
-            <>
-              <GitCommit size={12} />
-              <span>Commit & Push</span>
-            </>
-          )}
-        </button>
+        {/* Commit and Push button - only shown when git repo is detected */}
+        {isGitRepo && (
+          <button
+            onClick={handleCommitAndPush}
+            disabled={isCommitting}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all duration-200",
+              !isCommitting
+                ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-sm hover:shadow-md active:scale-95"
+                : "bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed"
+            )}
+            title="Stage all changes, generate a commit message, commit and push to remote"
+          >
+            {isCommitting ? (
+              <>
+                <Loader2 size={12} className="animate-spin" />
+                <span>Committing…</span>
+              </>
+            ) : (
+              <>
+                <GitCommitHorizontal size={12} />
+                <span>Commit & Push</span>
+              </>
+            )}
+          </button>
+        )}
 
         <div className="flex-1" />
 
@@ -287,8 +310,8 @@ export function CodePane({ conversationId }: CodePaneProps) {
             onClick={() => setAgentModeOpen((o) => !o)}
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200',
-              agentModeOpen 
-                ? 'border-amber-500/50 bg-amber-500/10' 
+              agentModeOpen
+                ? 'border-amber-500/50 bg-amber-500/10'
                 : 'border-[var(--border)] hover:border-[var(--border-focus)]'
             )}
           >

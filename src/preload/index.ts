@@ -49,6 +49,11 @@ const api = {
   workspace: {
     select: () => ipcRenderer.invoke('workspace:select'),
     gitBranch: (path: string) => ipcRenderer.invoke('workspace:git-branch', path)
+  },
+  git: {
+    status: (workspacePath: string) => ipcRenderer.invoke('git:status', workspacePath),
+    diff: (workspacePath: string) => ipcRenderer.invoke('git:diff', workspacePath),
+    changesSummary: (workspacePath: string) => ipcRenderer.invoke('git:changes-summary', workspacePath)
   }
 }
 

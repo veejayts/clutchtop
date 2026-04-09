@@ -42,6 +42,31 @@ export interface AppSettings {
   providers: Record<string, { apiKey?: string; baseUrl?: string; defaultModel: string }>
 }
 
+export interface GitStatus {
+  isGit: boolean
+  status: string
+  branch: string | null
+}
+
+export interface GitDiff {
+  staged: string
+  unstaged: string
+  status: string
+}
+
+export interface GitChangesSummary {
+  hasChanges: boolean
+  files?: {
+    added: string[]
+    modified: string[]
+    deleted: string[]
+    renamed: string[]
+  }
+  diffStat?: string
+  diffContent?: string
+  summary?: string
+}
+
 declare global {
   interface Window {
     api: {
@@ -85,6 +110,11 @@ declare global {
       workspace: {
         select: () => Promise<string | null>
         gitBranch: (path: string) => Promise<string | null>
+      }
+      git: {
+        status: (workspacePath: string) => Promise<GitStatus>
+        diff: (workspacePath: string) => Promise<GitDiff>
+        changesSummary: (workspacePath: string) => Promise<GitChangesSummary>
       }
     }
   }
