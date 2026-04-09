@@ -5,6 +5,7 @@ import { useConversationsStore } from '../store/conversations'
 import { useSettingsStore } from '../store/settings'
 import { useWorkspaceStore } from '../store/workspace'
 import { useProvider } from './useProvider'
+import { generateTitle } from '../lib/generateTitle'
 import { CODE_TOOLS } from '../tools/definitions'
 import { executeToolCalls } from '../tools/executor'
 import type { Message, ContentPart, ToolUsePart, ToolResultPart } from '../providers/types'
@@ -37,11 +38,7 @@ export function useCodeAgent(conversationId: string) {
     }
     await messagesStore.appendMessage(conversationId, userMsg)
 
-    // Auto-title
-    const msgs = messagesStore.getMessages(conversationId)
-    if (msgs.length === 1) {
-      await convsStore.update(conversationId, { title: userText.slice(0, 60) })
-    }
+    const isFirstMessage = messagesStore.getMessages(conversationId).length === 1
 
     const ac = new AbortController()
     messagesStore.setAbortController(conversationId, ac)
@@ -125,6 +122,13 @@ export function useCodeAgent(conversationId: string) {
 
       // Finalize assistant message
       await messagesStore.finalizeStream(conversationId, assistantContent)
+
+      // Generate AI title after first exchange (fire-and-forget)
+      if (isFirstMessage && iterations === 1) {
+        generateTitle(provider, model, userText, textAccum).then((title) => {
+          if (title) convsStore.update(conversationId, { title })
+        })
+      }
 
       // No tool calls → done
       if (toolCalls.length === 0) break

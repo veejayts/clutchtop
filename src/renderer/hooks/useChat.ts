@@ -4,6 +4,7 @@ import { useMessagesStore } from '../store/messages'
 import { useConversationsStore } from '../store/conversations'
 import { useSettingsStore } from '../store/settings'
 import { useProvider } from './useProvider'
+import { generateTitle } from '../lib/generateTitle'
 import type { Message, ContentPart } from '../providers/types'
 
 export function useChat(conversationId: string) {
@@ -29,12 +30,7 @@ export function useChat(conversationId: string) {
     }
     await messagesStore.appendMessage(conversationId, userMsg)
 
-    // Auto-title on first message
-    const msgs = messagesStore.getMessages(conversationId)
-    if (msgs.length === 1) {
-      const title = userText.slice(0, 60)
-      await convsStore.update(conversationId, { title })
-    }
+    const isFirstMessage = messagesStore.getMessages(conversationId).length === 1
 
     const ac = new AbortController()
     messagesStore.setAbortController(conversationId, ac)
@@ -65,6 +61,13 @@ export function useChat(conversationId: string) {
       // Coalesce text parts
       const fullText = textParts.map((p) => (p as { text: string }).text).join('')
       await messagesStore.finalizeStream(conversationId, [{ type: 'text', text: fullText }])
+
+      // Generate AI title after first exchange (fire-and-forget)
+      if (isFirstMessage) {
+        generateTitle(provider, model, userText, fullText).then((title) => {
+          if (title) convsStore.update(conversationId, { title })
+        })
+      }
     } catch (err) {
       if ((err as Error)?.name !== 'AbortError') {
         const currentText = messagesStore.getStreamingState(conversationId).text
