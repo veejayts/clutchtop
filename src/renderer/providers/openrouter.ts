@@ -25,7 +25,10 @@ export class OpenRouterProvider extends OpenAIProvider {
         'anthropic/claude-3-opus',
         'openai/gpt-4o',
         'google/gemini-1.5-pro',
-        'meta-llama/llama-3.1-70b-instruct'
+        'meta-llama/llama-3.1-70b-instruct',
+        'minimax/minimax-01',
+        'moonshot/moonshot-v1-8k',
+        'xiaomi/mimo-vl-7b-rl'
       ]
     }
   }

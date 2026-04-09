@@ -9,7 +9,7 @@ const DEFAULT_MODELS: Record<string, string[]> = {
   openai:     ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
   gemini:     ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro'],
   ollama:     ['llama3.2', 'mistral', 'codellama', 'phi3'],
-  openrouter: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemini-1.5-pro', 'meta-llama/llama-3.1-70b-instruct']
+  openrouter: ['anthropic/claude-3.5-sonnet', 'openai/gpt-4o', 'google/gemini-1.5-pro', 'meta-llama/llama-3.1-70b-instruct', 'minimax/minimax-01', 'moonshot/moonshot-v1-8k', 'xiaomi/mimo-vl-7b-rl']
 }
 
 export function ProviderSettings() {

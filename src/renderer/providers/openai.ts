@@ -46,7 +46,7 @@ export class OpenAIProvider implements AIProvider {
 
   constructor(protected config: ProviderConfig) {
     this.client = new OpenAI({
-      apiKey: config.apiKey ?? '',
+      apiKey: config.apiKey || 'sk-placeholder',
       baseURL: config.baseUrl,
       dangerouslyAllowBrowser: true
     })
@@ -69,6 +69,10 @@ export class OpenAIProvider implements AIProvider {
     maxTokens?: number
     signal?: AbortSignal
   }): AsyncIterable<StreamChunk> {
+    if (!this.config.apiKey && this.id !== 'ollama') {
+      throw new Error('No API key configured. Please add your API key in Settings.')
+    }
+
     const oaiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = []
     if (params.systemPrompt) {
       oaiMessages.push({ role: 'system', content: params.systemPrompt })

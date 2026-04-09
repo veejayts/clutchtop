@@ -49,7 +49,7 @@ export class AnthropicProvider implements AIProvider {
   private client: Anthropic
 
   constructor(private config: ProviderConfig) {
-    this.client = new Anthropic({ apiKey: config.apiKey ?? '', dangerouslyAllowBrowser: true })
+    this.client = new Anthropic({ apiKey: config.apiKey || 'sk-placeholder', dangerouslyAllowBrowser: true })
   }
 
   async listModels(): Promise<string[]> {
@@ -70,6 +70,10 @@ export class AnthropicProvider implements AIProvider {
     maxTokens?: number
     signal?: AbortSignal
   }): AsyncIterable<StreamChunk> {
+    if (!this.config.apiKey) {
+      throw new Error('No Anthropic API key configured. Please add your API key in Settings.')
+    }
+
     const anthropicMessages = toAnthropicMessages(params.messages)
     const anthropicTools: Anthropic.Tool[] | undefined = params.tools?.map((t) => ({
       name: t.name,
