@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { MessageSquare, Bot, Settings, Sun, Moon, Monitor } from 'lucide-react'
+import { MessageSquare, Terminal, Settings, Sun, Moon, Monitor } from 'lucide-react'
 import { useWorkspaceStore } from '../../store/workspace'
 import { useSettingsStore } from '../../store/settings'
 import { SettingsModal } from '../settings/SettingsModal'
-import { Button } from '../ui/Button'
 import { cn } from '../../lib/utils'
 
 export function TopBar() {
@@ -21,42 +20,51 @@ export function TopBar() {
 
   return (
     <>
-      <header className="h-11 flex items-center justify-between px-4 border-b border-[var(--border)] bg-[var(--bg-secondary)] flex-shrink-0 drag-region">
-        {/* Mode toggle */}
-        <div className="flex items-center gap-1 bg-[var(--bg-primary)] rounded-lg p-1">
+      <header className="h-12 flex items-center justify-between px-4 border-b border-[var(--border)] bg-[var(--bg-secondary)] flex-shrink-0 drag-region rounded-tl-2xl">
+        {/* Mode toggle — improved pill segmented control */}
+        <div className="flex items-center gap-1 bg-[var(--bg-primary)] rounded-xl p-1 border border-[var(--border)] shadow-[var(--shadow-sm)]">
           <button
             onClick={() => setMode('chat')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
+              'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
               mode === 'chat'
-                ? 'bg-amber-600 text-white'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
             )}
           >
-            <MessageSquare size={13} />
-            Chat
+            <MessageSquare size={14} className={mode === 'chat' ? 'text-white' : ''} />
+            <span>Chat</span>
           </button>
           <button
             onClick={() => setMode('agent')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors',
+              'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
               mode === 'agent'
-                ? 'bg-amber-600 text-white'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
             )}
           >
-            <Bot size={13} />
-            Agent
+            <Terminal size={14} className={mode === 'agent' ? 'text-white' : ''} />
+            <span>Agent</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Button size="icon" variant="ghost" onClick={cycleTheme} title={`Theme: ${theme}`}>
+        {/* Right controls */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={cycleTheme}
+            title={`Theme: ${theme}`}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] hover:shadow-md transition-all duration-200"
+          >
             <ThemeIcon size={15} />
-          </Button>
-          <Button size="icon" variant="ghost" onClick={() => setSettingsOpen(true)} title="Settings (Ctrl+,)">
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            title="Settings (Ctrl+,)"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] hover:shadow-md transition-all duration-200"
+          >
             <Settings size={15} />
-          </Button>
+          </button>
         </div>
       </header>
 

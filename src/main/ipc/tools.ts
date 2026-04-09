@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { readFile, writeFile, listDir } from '../tools/fs-tool'
-import { runCommand } from '../tools/shell-tool'
+import { runCommand, gitCommitAndPush } from '../tools/shell-tool'
 import { webFetch } from '../tools/fetch-tool'
 import { grepSearch, globSearch } from '../tools/search-tool'
 
@@ -39,6 +39,9 @@ export function registerToolHandlers(): void {
           break
         case 'globSearch':
           content = globSearch(input as { pattern: string; path?: string }, workspacePath)
+          break
+        case 'gitCommitAndPush':
+          content = await gitCommitAndPush(input as { commitMessage?: string }, workspacePath, sendChunk)
           break
         default:
           return { content: `Unknown tool: ${name}`, isError: true }

@@ -50,7 +50,7 @@ export function ProviderSettings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {ALL_PROVIDER_IDS.map((id) => {
         const config = providers[id] ?? { defaultModel: '' }
         const needsApiKey = id !== 'ollama'
@@ -61,12 +61,18 @@ export function ProviderSettings() {
           : (DEFAULT_MODELS[id] ?? []).map((m) => ({ value: m, label: m }))
 
         return (
-          <div key={id} className="space-y-3">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{PROVIDER_LABELS[id]}</h3>
-            <div className="space-y-2">
+          <div 
+            key={id} 
+            className="space-y-3 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--border-focus)] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">{PROVIDER_LABELS[id]}</h3>
+            </div>
+            <div className="space-y-3">
               {needsApiKey && (
                 <div>
-                  <label className="text-xs text-[var(--text-secondary)] block mb-1">API Key</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] block mb-2">API Key</label>
                   <Input
                     type="password"
                     value={config.apiKey ?? ''}
@@ -78,7 +84,7 @@ export function ProviderSettings() {
               )}
               {needsBaseUrl && (
                 <div>
-                  <label className="text-xs text-[var(--text-secondary)] block mb-1">Base URL</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] block mb-2">Base URL</label>
                   <Input
                     value={config.baseUrl ?? ''}
                     onChange={(e) => updateProviderConfig(id, { baseUrl: e.target.value })}
@@ -88,7 +94,7 @@ export function ProviderSettings() {
                 </div>
               )}
               <div>
-                <label className="text-xs text-[var(--text-secondary)] block mb-1">Default Model</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-2">Default Model</label>
                 <Select
                   value={config.defaultModel}
                   onChange={(e) => { updateProviderConfig(id, { defaultModel: e.target.value }); save() }}
@@ -97,22 +103,25 @@ export function ProviderSettings() {
               </div>
 
               {isOpenRouter && (
-                <div className="pt-1 space-y-1">
+                <div className="pt-2 space-y-2">
                   <button
                     onClick={handleFetchOrModels}
                     disabled={orFetching}
-                    className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-amber-600/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-amber-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
                   >
-                    <RefreshCw size={11} className={orFetching ? 'animate-spin' : ''} />
-                    {orFetching ? 'Fetching…' : 'Fetch latest models'}
+                    <RefreshCw size={12} className={orFetching ? 'animate-spin' : ''} />
+                    {orFetching ? 'Fetching models...' : 'Refresh model list'}
                   </button>
                   {orFetchedAt && !orError && (
-                    <p className="text-[10px] text-[var(--text-secondary)]">
+                    <p className="text-[10px] text-[var(--text-muted)]">
                       {orModels.length} models · last fetched {new Date(orFetchedAt).toLocaleString()}
                     </p>
                   )}
                   {orError && (
-                    <p className="text-[10px] text-red-400">{orError}</p>
+                    <p className="text-[10px] text-red-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                      {orError}
+                    </p>
                   )}
                 </div>
               )}

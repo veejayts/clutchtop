@@ -27,19 +27,23 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="Settings" width="lg">
       <div className="flex gap-4 -mt-1">
-        {/* Tab nav */}
-        <nav className="w-28 flex-shrink-0 flex flex-col gap-0.5">
+        {/* Tab nav - improved styling */}
+        <nav className="w-32 flex-shrink-0 flex flex-col gap-1">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                'text-left px-3 py-2 rounded-lg text-sm transition-colors',
+                'text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2',
                 tab === t.id
-                  ? 'bg-amber-600/20 text-amber-500 font-medium'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] hover:shadow-sm'
               )}
             >
+              <span className={cn(
+                'w-2 h-2 rounded-full transition-colors',
+                tab === t.id ? 'bg-white' : 'bg-[var(--text-muted)]'
+              )}></span>
               {t.label}
             </button>
           ))}
@@ -52,7 +56,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
           {tab === 'general' && (
             <div className="space-y-4">
               <div>
-                <label className="text-xs text-[var(--text-secondary)] block mb-1">Default Provider</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-2">Default Provider</label>
                 <Select
                   value={defaultProvider}
                   onChange={(e) => { setDefaultProvider(e.target.value as typeof defaultProvider); save() }}
@@ -60,7 +64,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                 />
               </div>
               <div>
-                <label className="text-xs text-[var(--text-secondary)] block mb-1">Default Model</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-2">Default Model</label>
                 <Select
                   value={defaultModel}
                   onChange={(e) => { setDefaultModel(e.target.value); save() }}

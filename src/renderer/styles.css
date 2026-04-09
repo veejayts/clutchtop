@@ -1,37 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @layer base {
   :root {
-    --bg-primary: #ffffff;
+    /* Light theme - refined palette */
+    --bg-primary: #fafafa;
     --bg-secondary: #f5f5f5;
-    --text-primary: #111111;
-    --text-secondary: #555555;
+    --bg-hover: #eeeeee;
+    --bg-elevated: #ffffff;
+    --bg-card: #ffffff;
+    
+    --text-primary: #1a1a1a;
+    --text-secondary: #5a5a5a;
+    --text-muted: #8a8a8a;
+    --text-inverted: #ffffff;
+    
     --border: #e0e0e0;
+    --border-subtle: #e8e8e8;
+    --border-focus: #c0c0c0;
+    
+    /* Amber accent - more sophisticated */
     --accent: #d97706;
+    --accent-hover: #b45309;
+    --accent-active: #92400e;
+    --accent-dim: rgba(217, 119, 6, 0.12);
+    --accent-light: rgba(217, 119, 6, 0.08);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05), 0 1px 1px rgba(0,0,0,0.03);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
+    --shadow-xl: 0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04);
+    
+    /* Status colors */
+    --success: #059669;
+    --warning: #d97706;
+    --error: #dc2626;
+    --info: #2563eb;
   }
 
   .dark {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #242424;
-    --text-primary: #f0f0f0;
-    --text-secondary: #999999;
-    --border: #333333;
+    /* Dark theme - refined palette */
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #161616;
+    --bg-hover: #1f1f1f;
+    --bg-elevated: #1a1a1a;
+    --bg-card: #1c1c1c;
+    
+    --text-primary: #f5f5f5;
+    --text-secondary: #a0a0a0;
+    --text-muted: #6a6a6a;
+    --text-inverted: #0f0f0f;
+    
+    --border: #2a2a2a;
+    --border-subtle: #222222;
+    --border-focus: #3a3a3a;
+    
+    /* Amber accent - more vibrant in dark */
     --accent: #f59e0b;
+    --accent-hover: #fbbf24;
+    --accent-active: #f59e0b;
+    --accent-dim: rgba(245, 158, 11, 0.15);
+    --accent-light: rgba(245, 158, 11, 0.1);
+    
+    /* Shadows - darker and more subtle */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4), 0 1px 1px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3);
+    --shadow-xl: 0 20px 25px rgba(0,0,0,0.5), 0 10px 10px rgba(0,0,0,0.3);
   }
 
   * {
     box-sizing: border-box;
   }
 
+  html {
+    font-feature-settings: "cv11", "ss01";
+    font-variation-settings: "opsz" 32;
+  }
+
   body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-primary);
     color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 14px;
+    line-height: 1.6;
   }
 
+  /* Smooth scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -43,6 +103,71 @@
 
   ::-webkit-scrollbar-thumb {
     background: var(--border);
-    border-radius: 3px;
+    border-radius: 99px;
+    transition: background 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--accent-dim);
+    color: var(--text-primary);
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Drag region for electron titlebar */
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+  .drag-region button,
+  .drag-region a {
+    -webkit-app-region: no-drag;
+  }
+
+  /* Custom animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(8px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.25s ease-out;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
+  }
+
+  /* Code font */
+  .font-mono {
+    font-family: 'Fira Code', 'Menlo', 'Monaco', 'Courier New', monospace;
   }
 }

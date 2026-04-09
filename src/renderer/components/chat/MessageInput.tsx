@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Send, Square } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
@@ -36,37 +36,53 @@ export function MessageInput({ onSend, isStreaming, onCancel, placeholder }: Mes
     ta.style.height = Math.min(ta.scrollHeight, 200) + 'px'
   }
 
+  // Focus textarea on mount
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus()
+    }
+  }, [])
+
   return (
     <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-primary)]">
-      <div className="flex items-end gap-2 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] px-3 py-2 focus-within:border-amber-500/50 transition-colors">
+      <div className="flex items-end gap-2 bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] px-4 py-3 focus-within:border-amber-500/50 focus-within:shadow-md transition-all duration-200">
         <textarea
           ref={textareaRef}
           value={value}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder ?? 'Message…'}
+          placeholder={placeholder ?? 'Type a message...'}
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none py-1 min-h-[28px] max-h-[200px]"
+          className="flex-1 resize-none bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none py-1 min-h-[24px] max-h-[200px] leading-relaxed"
           disabled={false}
         />
         <button
           onClick={isStreaming ? onCancel : handleSend}
           disabled={!isStreaming && !value.trim()}
           className={cn(
-            'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors mb-0.5',
+            'flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 shadow-sm',
             isStreaming
-              ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+              ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 hover:shadow-md active:scale-95'
               : value.trim()
-                ? 'bg-amber-600 text-white hover:bg-amber-500'
-                : 'bg-[var(--border)] text-[var(--text-secondary)] cursor-not-allowed'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 hover:shadow-md active:scale-95'
+                : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
           )}
         >
-          {isStreaming ? <Square size={14} /> : <Send size={14} />}
+          {isStreaming ? <Square size={14} className="fill-current" /> : <Send size={14} />}
         </button>
       </div>
-      <p className="text-xs text-[var(--text-secondary)] mt-1.5 text-center">
-        Enter to send · Shift+Enter for newline
-      </p>
+      <div className="flex items-center justify-center gap-4 mt-2">
+        <p className="text-xs text-[var(--text-muted)] flex items-center gap-1">
+          <kbd className="px-1.5 py-0.5 bg-[var(--bg-hover)] rounded border border-[var(--border)] text-[10px]">Enter</kbd>
+          <span>to send</span>
+        </p>
+        <p className="text-xs text-[var(--text-muted)] flex items-center gap-1">
+          <kbd className="px-1.5 py-0.5 bg-[var(--bg-hover)] rounded border border-[var(--border)] text-[10px]">Shift</kbd>
+          <span>+</span>
+          <kbd className="px-1.5 py-0.5 bg-[var(--bg-hover)] rounded border border-[var(--border)] text-[10px]">Enter</kbd>
+          <span>for newline</span>
+        </p>
+      </div>
     </div>
   )
 }

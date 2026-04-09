@@ -37,18 +37,21 @@ export function MessageItem({ message }: MessageItemProps) {
   }
 
   return (
-    <div className={cn('flex gap-3 py-3 px-4', isUser ? 'justify-end' : 'justify-start')}>
+    <div className={cn('flex gap-3 py-4 px-4', isUser ? 'justify-end' : 'justify-start')}>
+      {/* Avatar */}
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-amber-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold mt-0.5">
-          AI
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+          <span className="text-white text-xs font-bold">AI</span>
         </div>
       )}
+      
+      {/* Message bubble */}
       <div
         className={cn(
-          'max-w-[80%] rounded-xl px-4 py-3 text-sm leading-relaxed',
+          'max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm transition-all duration-200',
           isUser
-            ? 'bg-amber-600 text-white rounded-br-sm'
-            : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-bl-sm border border-[var(--border)]'
+            ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-br-sm shadow-md'
+            : 'bg-[var(--bg-card)] text-[var(--text-primary)] rounded-bl-sm border border-[var(--border)] hover:shadow-md'
         )}
       >
         {message.content.map((part, i) => {
@@ -63,7 +66,7 @@ export function MessageItem({ message }: MessageItemProps) {
                       return <CodeBlock code={String(children).replace(/\n$/, '')} language={lang} />
                     }
                     return (
-                      <code className="bg-black/20 rounded px-1 py-0.5 text-xs font-mono" {...props}>
+                      <code className="bg-black/20 rounded px-1.5 py-0.5 text-xs font-mono" {...props}>
                         {children}
                       </code>
                     )
@@ -72,13 +75,25 @@ export function MessageItem({ message }: MessageItemProps) {
                     return <p className="mb-2 last:mb-0">{children}</p>
                   },
                   ul({ children }) {
-                    return <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>
+                    return <ul className="list-disc list-inside mb-2 space-y-1 ml-1">{children}</ul>
                   },
                   ol({ children }) {
-                    return <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>
+                    return <ol className="list-decimal list-inside mb-2 space-y-1 ml-1">{children}</ol>
                   },
                   blockquote({ children }) {
-                    return <blockquote className="border-l-2 border-amber-500 pl-3 italic opacity-80">{children}</blockquote>
+                    return <blockquote className="border-l-2 border-amber-500/50 pl-3 italic text-[var(--text-secondary)]">{children}</blockquote>
+                  },
+                  a({ href, children }) {
+                    return (
+                      <a 
+                        href={href} 
+                        className="text-amber-500 hover:text-amber-400 underline decoration-amber-500/50 hover:decoration-amber-400 transition-colors"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {children}
+                      </a>
+                    )
                   }
                 }}
               >
@@ -100,9 +115,11 @@ export function MessageItem({ message }: MessageItemProps) {
           return null
         })}
       </div>
+      
+      {/* User avatar */}
       {isUser && (
-        <div className="w-7 h-7 rounded-full bg-[var(--border)] flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5 text-[var(--text-secondary)]">
-          U
+        <div className="w-8 h-8 rounded-xl bg-[var(--bg-secondary)] flex items-center justify-center flex-shrink-0 shadow-sm border border-[var(--border)]">
+          <span className="text-xs font-medium text-[var(--text-secondary)]">U</span>
         </div>
       )}
     </div>

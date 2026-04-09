@@ -83,5 +83,16 @@ export const CODE_TOOLS: ToolDefinition[] = [
       },
       required: ['pattern']
     }
+  },
+  {
+    name: 'gitCommitAndPush',
+    description: 'Generate a comprehensive commit message and apply git commit and git push to the repository. This tool will analyze the changes in the workspace and create a meaningful commit message automatically.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        commitMessage: { type: 'string', description: 'Optional custom commit message. If not provided, an AI-generated message will be created.' }
+      },
+      required: []
+    }
   }
 ]
