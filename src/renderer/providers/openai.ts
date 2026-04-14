@@ -120,14 +120,15 @@ export class OpenAIProvider implements AIProvider {
         }
       }
 
-      if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+      const finishReason = chunk.choices[0]?.finish_reason
+      if (finishReason === 'tool_calls') {
         for (const tc of Object.values(toolCalls)) {
           let parsed: Record<string, unknown> = {}
           try { parsed = JSON.parse(tc.args) } catch { /* ignore */ }
           yield { type: 'tool_use_end', toolUseId: tc.id, toolName: tc.name, toolInputFull: parsed }
         }
         yield { type: 'message_stop' }
-      } else if (chunk.choices[0]?.finish_reason === 'stop') {
+      } else if (finishReason === 'stop' || finishReason === 'max_tokens') {
         yield { type: 'message_stop' }
       }
     }

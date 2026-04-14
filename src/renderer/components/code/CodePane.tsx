@@ -108,7 +108,11 @@ export function CodePane({ conversationId }: CodePaneProps) {
           diffStat: changesSummary.diffStat ?? '',
           diffContent: changesSummary.diffContent ?? ''
         })
-        commitMessage = llmMessage ?? undefined
+        if (llmMessage) {
+          commitMessage = llmMessage
+        } else {
+          console.warn('[handleCommitAndPush] LLM message generation returned null, falling back to generic message')
+        }
       }
 
       // Step 3: Execute git commit and push with the LLM-generated message

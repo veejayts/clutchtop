@@ -13,6 +13,7 @@ export async function generateCommitMessage(
     diffContent: string
   }
 ): Promise<string | null> {
+  console.log('[generateCommitMessage] starting, provider:', provider.id, 'model:', model)
   try {
     const { files, diffStat, diffContent } = changesSummary
 
@@ -55,14 +56,16 @@ Generate a concise, meaningful git commit message that summarizes these changes.
     })) {
       if (chunk.type === 'text_delta' && chunk.textDelta) {
         message += chunk.textDelta
-      } else if (chunk.type === 'message_stop' || chunk.type === 'error') {
-        break
       }
+      // Do not break early — let the loop exhaust naturally so the stream
+      // closes cleanly instead of being aborted mid-flight.
     }
 
     const cleaned = message.trim().replace(/^["']|["']$/g, '').trim()
+    console.log('[generateCommitMessage] result:', cleaned || '(empty)')
     return cleaned || null
-  } catch {
+  } catch (err) {
+    console.error('[generateCommitMessage] failed:', err)
     return null
   }
 }
