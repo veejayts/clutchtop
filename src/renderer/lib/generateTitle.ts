@@ -12,7 +12,7 @@ export async function generateTitle(
 ): Promise<string | null> {
   try {
     const prompt =
-      `User: ${userMessage}\n\nAssistant: ${assistantMessage.slice(0, 300)}`
+      `User: ${userMessage.slice(0, 500)}\n\nAssistant: ${assistantMessage.slice(0, 300)}`
 
     let title = ''
     for await (const chunk of provider.stream({
@@ -24,14 +24,15 @@ export async function generateTitle(
     })) {
       if (chunk.type === 'text_delta' && chunk.textDelta) {
         title += chunk.textDelta
-      } else if (chunk.type === 'message_stop' || chunk.type === 'error') {
-        break
       }
+      // Do not break early — let the loop exhaust naturally so the stream
+      // closes cleanly instead of being aborted mid-flight.
     }
 
     const cleaned = title.trim().replace(/^["']|["']$/g, '').trim()
     return cleaned || null
-  } catch {
+  } catch (err) {
+    console.error('[generateTitle] failed:', err)
     return null
   }
 }

@@ -18,7 +18,7 @@ export function runCommand(
   onChunk?: (chunk: string) => void
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const timeout = input.timeout ?? 30000
+    const timeout = input.timeout ?? 120000
     const isWindows = process.platform === 'win32'
     const shell = isWindows ? 'cmd.exe' : '/bin/sh'
     const shellFlag = isWindows ? '/c' : '-c'

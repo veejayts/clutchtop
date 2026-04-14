@@ -11,7 +11,7 @@ import { executeToolCalls } from '../tools/executor'
 import type { Message, ContentPart, ToolUsePart, ToolResultPart } from '../providers/types'
 import type { ToolCall } from '../tools/types'
 
-const MAX_ITERATIONS = 20
+const MAX_ITERATIONS = 100
 
 export function useCodeAgent(conversationId: string) {
   const messagesStore = useMessagesStore()
@@ -47,6 +47,7 @@ export function useCodeAgent(conversationId: string) {
     const tools = agentMode === 'execute' ? CODE_TOOLS : undefined
 
     let iterations = 0
+    let reachedLimit = false
 
     while (iterations < MAX_ITERATIONS) {
       iterations++
@@ -133,6 +134,12 @@ export function useCodeAgent(conversationId: string) {
       // No tool calls → done
       if (toolCalls.length === 0) break
 
+      // Stop before executing more tools if we're at the limit
+      if (iterations >= MAX_ITERATIONS) {
+        reachedLimit = true
+        break
+      }
+
       // Execute tool calls (sandboxed to workspacePath)
       const results = await executeToolCalls(toolCalls, workspacePath)
 
@@ -151,6 +158,17 @@ export function useCodeAgent(conversationId: string) {
         createdAt: new Date().toISOString()
       }
       await messagesStore.appendMessage(conversationId, toolResultMsg)
+    }
+
+    // Notify the user if the agent hit the iteration ceiling
+    if (reachedLimit) {
+      const limitMsg: Message = {
+        id: nanoid(),
+        role: 'assistant',
+        content: [{ type: 'text', text: `Agent paused after ${MAX_ITERATIONS} iterations. Send a follow-up to continue.` }],
+        createdAt: new Date().toISOString()
+      }
+      await messagesStore.appendMessage(conversationId, limitMsg)
     }
   }, [conversationId, messagesStore, convsStore, settings, provider, conversation, providerId, agentMode])
 

@@ -42,7 +42,7 @@ export const CODE_TOOLS: ToolDefinition[] = [
       type: 'object',
       properties: {
         command: { type: 'string', description: 'The shell command to run.' },
-        timeout: { type: 'number', description: 'Timeout in milliseconds (default: 30000).' }
+        timeout: { type: 'number', description: 'Timeout in milliseconds (default: 120000).' }
       },
       required: ['command']
     }
